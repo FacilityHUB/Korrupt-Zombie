@@ -1476,19 +1476,22 @@ game:GetService("Players").PlayerAdded:Connect(function(newplr)
 end)
 
 --//Misc\\--
-
+-- Création d'un toggle dans l'interface
 local Toggle = Tabs.Misc:AddToggle("MyToggle", {Title = "Auto-Execute", Default = true})
 
+-- Fonction appelée quand l'état du toggle change
 Toggle:OnChanged(function()
-    if Options.MyToggle.Value then
-        if queue_on_teleport and sendValidnotif then
-            queue_on_teleport("loadstring(game:HttpGet('https://raw.githubusercontent.com/FacilityHUB/Korrupt-Zombie/refs/heads/main/test'))()")
-            sendValidnotif("Script will be auto executed on teleport")
-        else
-            warn("queue_on_teleport or sendValidnotif is not defined.")
-        end
+    if Toggle.Value then
+        -- Si le toggle est activé, charger et exécuter le script distant
+        queue_on_teleport("loadstring(game:HttpGet('https://raw.githubusercontent.com/FacilityHUB/Korrupt-Zombie/refs/heads/main/test'))()")
     end
 end)
+
+Options.MyToggle:SetValue(true)
+
+
+
+
 
 --//Settings\\-- Not Delete
 SaveManager:SetLibrary(Fluent)
