@@ -1477,17 +1477,17 @@ end)
 
 --//Misc\\--
 
-local Toggle = Tabs.Misc:AddToggle("MyToggle", {Title = "Toggle", Default = false })
+local Toggle = Tabs.Misc:AddToggle("MyToggle", { Title = "Auto-Execute", Default = true })
 
 Toggle:OnChanged(function()
-    if Options.MyToggle.Value then
-        queue_on_teleport("loadstring(game:HttpGet('https://raw.githubusercontent.com/rybowe/rybowescripts/main/release.lua'))()")
-        sendValidnotif("Script will be auto executed on teleport")
-    else
-        print("Auto-execute disabled")
-    end
+	if Options.MyToggle.Value then
+		queue_on_teleport(
+			"loadstring(game:HttpGet('https://raw.githubusercontent.com/FacilityHUB/Korrupt-Zombie/refs/heads/main/test'))()"
+		)
+		sendValidnotif("Script will be auto executed on teleport")
+	else
+	end
 end)
-
 
 --//Settings\\-- Not Delete
 SaveManager:SetLibrary(Fluent)
