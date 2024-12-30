@@ -1,0 +1,156 @@
+
+    local player = game.Players.LocalPlayer
+local character = player.Character or player.CharacterAdded:Wait()
+local rootPart = character:WaitForChild("HumanoidRootPart")
+
+local workspaces = {
+    ["Helicopter Workspace"] = workspace["Game Systems"]["Helicopter Workspace"],
+    ["Drone Workspace"] = workspace["Game Systems"]["Drone Workspace"],
+    ["Plane Workspace"] = workspace["Game Systems"]["Plane Workspace"],
+    ["Tank Workspace"] = workspace["Game Systems"]["Tank Workspace"],
+    ["Vehicle Workspace"] = workspace["Game Systems"]["Vehicle Workspace"]
+}
+
+local originalPositions = {}
+local teleporting = false
+local offsetX, offsetY, offsetZ = 0, 0, -50  
+local selectedFolders = {}
+
+-- Sauvegarde des positions initiales
+local function saveOriginalPositions()
+    for _, folder in pairs(workspaces) do
+        for _, child in ipairs(folder:GetChildren()) do
+            if child:IsA("Model") and child.PrimaryPart then
+                originalPositions[child] = child.PrimaryPart.CFrame
+            end
+        end
+    end
+end
+
+saveOriginalPositions()
+
+-- Téléportation continue
+local function teleportModels()
+    while teleporting do
+        for folderName, folder in pairs(workspaces) do
+            if selectedFolders[folderName] then
+                for _, child in ipairs(folder:GetChildren()) do
+                    if child:IsA("Model") and child.PrimaryPart then
+                        local offset = CFrame.new(offsetX, offsetY, offsetZ)
+                        child:SetPrimaryPartCFrame(rootPart.CFrame * offset)
+                        
+                        for _, descendant in ipairs(child:GetDescendants()) do
+                            if descendant:IsA("BasePart") then
+                                descendant.Anchored = true
+                            end
+                        end
+                    end
+                end
+            end
+        end
+        wait(0.1)
+    end
+end
+
+-- Restauration des positions
+local function resetPositions()
+    for child, cframe in pairs(originalPositions) do
+        if child:IsA("Model") and child.PrimaryPart then
+            child:SetPrimaryPartCFrame(cframe)
+            
+            for _, descendant in ipairs(child:GetDescendants()) do
+                if descendant:IsA("BasePart") then
+                    descendant.Anchored = false
+                end
+            end
+        end
+    end
+end
+
+-- Toggle pour téléportation
+local Toggle = Tabs.Beta:AddToggle("MyToggle", {Title = "Teleport Toggle", Default = false })
+
+Toggle:OnChanged(function()
+    teleporting = Options.MyToggle.Value
+    if teleporting then
+        teleportModels()
+    else
+        resetPositions()
+    end
+end)
+
+-- Dropdown pour sélectionner les dossiers
+local folderNames = {}
+for folderName in pairs(workspaces) do
+    table.insert(folderNames, folderName)
+end
+
+local FolderDropdown = Tabs.Beta:AddDropdown("FolderDropdown", {
+    Title = "Select Workspace",
+    Description = "Select folders to teleport models from",
+    Values = folderNames,
+    Multi = true,
+    Default = {},
+})
+
+FolderDropdown:OnChanged(function(Value)
+    selectedFolders = {}
+    for folderName, state in pairs(Value) do
+        if state then
+            selectedFolders[folderName] = true
+        end
+    end
+    local selectedList = {}
+    for name in pairs(selectedFolders) do
+        table.insert(selectedList, name)
+    end
+    print("Selected folders:", table.concat(selectedList, ", "))
+end)
+
+-- Slider X
+local SliderX = Tabs.Beta:AddSlider("SliderX", {
+    Title = "Offset X",
+    Description = "Adjust X Offset",
+    Default = 0,
+    Min = -100,
+    Max = 100,
+    Rounding = 1,
+    Callback = function(Value)
+        offsetX = Value
+        print("Offset X changed:", offsetX)
+    end
+})
+
+-- Slider Y
+local SliderY = Tabs.Beta:AddSlider("SliderY", {
+    Title = "Offset Y",
+    Description = "Adjust Y Offset",
+    Default = 0,
+    Min = -100,
+    Max = 100,
+    Rounding = 1,
+    Callback = function(Value)
+        offsetY = Value
+        print("Offset Y changed:", offsetY)
+    end
+})
+
+-- Slider Z
+local SliderZ = Tabs.Beta:AddSlider("SliderZ", {
+    Title = "Offset Z",
+    Description = "Adjust Z Offset",
+    Default = -50,
+    Min = -200,
+    Max = 200,
+    Rounding = 1,
+    Callback = function(Value)
+        offsetZ = Value
+        print("Offset Z changed:", offsetZ)
+    end
+})
+
+Options.MyToggle:SetValue(false)
+SliderX:SetValue(0)
+SliderY:SetValue(0)
+SliderZ:SetValue(-50)
+FolderDropdown:SetValue({})
