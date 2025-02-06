@@ -129,6 +129,41 @@ function MacLib:Window(Settings)
 	baseUIStroke.Transparency = 0.9
 	baseUIStroke.Parent = base
 
+	-- Création du bouton pour gérer l'affichage
+local toggleInterfaceButton = Instance.new("TextButton")
+toggleInterfaceButton.Name = "ToggleInterfaceButton"
+toggleInterfaceButton.Parent = base -- Ajout au UI principal
+toggleInterfaceButton.Size = UDim2.new(0, 100, 0, 40)
+toggleInterfaceButton.Position = UDim2.new(1, -110, 0, 10) -- En haut à droite
+toggleInterfaceButton.AnchorPoint = Vector2.new(1, 0) -- Aligné à droite
+toggleInterfaceButton.Text = "Masquer"
+toggleInterfaceButton.BackgroundColor3 = Color3.fromRGB(30, 30, 30)
+toggleInterfaceButton.TextColor3 = Color3.fromRGB(255, 255, 255)
+toggleInterfaceButton.Font = Enum.Font.SourceSansBold
+toggleInterfaceButton.TextSize = 18
+toggleInterfaceButton.AutoButtonColor = true
+
+-- Variable pour suivre l'état d'affichage
+local interfaceVisible = true
+
+-- Fonction pour basculer l'affichage de l'interface
+local function toggleInterface()
+    interfaceVisible = not interfaceVisible
+    toggleInterfaceButton.Text = interfaceVisible and "Masquer" or "Afficher"
+
+    -- Animation pour masquer ou afficher l'interface
+    local targetTransparency = interfaceVisible and 0 or 1
+    for _, v in pairs(base:GetDescendants()) do
+        if v:IsA("GuiObject") then
+            v.Visible = interfaceVisible
+        end
+    end
+end
+
+-- Événement de clic du bouton
+toggleInterfaceButton.MouseButton1Click:Connect(toggleInterface)
+
+
 	local sidebar = Instance.new("Frame")
 	sidebar.Name = "Sidebar"
 	sidebar.BackgroundColor3 = Color3.fromRGB(255, 255, 255)
@@ -163,44 +198,6 @@ function MacLib:Window(Settings)
 	dividerInteract.TextColor3 = Color3.fromRGB(0, 0, 0)
 	dividerInteract.TextSize = 14
 	dividerInteract.Parent = divider
-
-	-- Création du bouton flottant
-local toggleButton = Instance.new("TextButton")
-toggleButton.Name = "ToggleButton"
-toggleButton.Text = "≡" -- Icône menu
-toggleButton.Size = UDim2.new(0, 50, 0, 50) -- Taille du bouton
-toggleButton.Position = UDim2.new(0, 10, 0.5, -25) -- Position à gauche
-toggleButton.BackgroundColor3 = Color3.fromRGB(30, 30, 30)
-toggleButton.TextColor3 = Color3.fromRGB(255, 255, 255)
-toggleButton.Font = Enum.Font.SourceSansBold
-toggleButton.TextSize = 20
-toggleButton.Parent = base.Parent -- Assurez-vous qu'il est bien dans la GUI
-
--- Ajout d'un effet de coin arrondi
-local uiCorner = Instance.new("UICorner")
-uiCorner.CornerRadius = UDim.new(0, 10)
-uiCorner.Parent = toggleButton
-
--- Variable d'état de l'UI
-local isUIOpen = true
-
--- Fonction pour basculer l'affichage avec Tween
-local function toggleUI()
-    if isUIOpen then
-        -- Cacher l'UI (glissement hors écran)
-        TweenService:Create(base, TweenInfo.new(0.3, Enum.EasingStyle.Sine, Enum.EasingDirection.Out), 
-            {Position = UDim2.new(-1, 0, 0.5, -base.Size.Y.Offset / 2)}):Play()
-    else
-        -- Afficher l'UI (glissement vers l'écran)
-        TweenService:Create(base, TweenInfo.new(0.3, Enum.EasingStyle.Sine, Enum.EasingDirection.Out), 
-            {Position = UDim2.new(0.5, 0, 0.5, -base.Size.Y.Offset / 2)}):Play()
-    end
-    isUIOpen = not isUIOpen
-end
-
--- Lier le clic du bouton à la fonction de bascule
-toggleButton.MouseButton1Click:Connect(toggleUI)
-
 
 	local windowControls = Instance.new("Frame")
 	windowControls.Name = "WindowControls"
