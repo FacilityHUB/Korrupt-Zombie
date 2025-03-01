@@ -22,8 +22,8 @@ Aimbot.Configuration = {
     Filled = false,
     Size = 100,
 
-    TriggerBotEnabled = false, -- Activer/Désactiver le TriggerBot
-    TriggerKey = Enum.KeyCode.T, -- Touche pour activer/désactiver le TriggerBot
+    TriggerBotEnabled = true, -- Change à false pour désactiver
+
 
     SelectedPart = { "Head" },
     maxDistance = 2000,
@@ -87,33 +87,6 @@ local function predictPosition(targetPart)
     return targetPart.Position
 end
 
-local function getTargetUnderCursor()
-    local mouseTarget = Mouse.Target
-    if not mouseTarget then return nil end
-
-    local player = Players:GetPlayerFromCharacter(mouseTarget.Parent)
-    if not player or player == Players.LocalPlayer then return nil end
-
-    local humanoid = player.Character and player.Character:FindFirstChildOfClass("Humanoid")
-    if not humanoid or humanoid.Health <= 0 then return nil end
-
-    if Aimbot.Configuration.TeamCheck and player.Team == Players.LocalPlayer.Team then
-        return nil
-    end
-
-    if Aimbot.Configuration.WallCheck then
-        local ray = workspace:FindPartOnRayWithIgnoreList(
-            Ray.new(Cam.CFrame.Position, (mouseTarget.Position - Cam.CFrame.Position).Unit * 500),
-            { Players.LocalPlayer.Character, Cam }
-        )
-        if ray and not ray:IsDescendantOf(player.Character) then
-            return nil
-        end
-    end
-
-    return mouseTarget
-end
-
 local function moveMouseToTarget(targetPosition)
     local targetPos = Cam:WorldToViewportPoint(targetPosition)
     local viewportCenter = Vector2.new(Cam.ViewportSize.X / 2, Cam.ViewportSize.Y / 2)
@@ -124,6 +97,16 @@ end
 local function alignCameraToTarget(targetPosition)
     Cam.CFrame = CFrame.new(Cam.CFrame.Position, targetPosition)
 end
+
+local function triggerBot(targetPart)
+    if targetPart and targetPart:IsA("BasePart") then
+        -- Simule un clic de souris pour tirer
+        VirtualInputManager:SendMouseButtonEvent(0, 0, 0, true, game, 0)
+        wait(0.02) -- Petite pause pour éviter le spam extrême
+        VirtualInputManager:SendMouseButtonEvent(0, 0, 0, false, game, 0)
+    end
+end
+
 
 local function isInFOV(targetPosition)
     local screenPosition, isVisible = Cam:WorldToViewportPoint(targetPosition)
@@ -339,14 +322,6 @@ UserInputService.InputEnded:Connect(function(input)
     end
 end)
 
-UserInputService.InputBegan:Connect(function(input, gameProcessed)
-    if gameProcessed then return end
-    if input.KeyCode == Aimbot.Configuration.TriggerKey then
-        Aimbot.Configuration.TriggerBotEnabled = not Aimbot.Configuration.TriggerBotEnabled
-    end
-end)
-
-
 RunService.RenderStepped:Connect(function()
     FOV.Position = Vector2.new(Cam.ViewportSize.X / 2, Cam.ViewportSize.Y / 2)
 
@@ -363,6 +338,12 @@ RunService.RenderStepped:Connect(function()
             elseif Aimbot.Configuration.AimMode == "Camera" then
                 alignCameraToTarget(predictedPosition)
             end
+            
+            -- Ajout du Triggerbot avec la condition
+            if Aimbot.Configuration.TriggerBotEnabled then
+                triggerBot(targetPartInstance)  -- Active le Triggerbot si la config le permet
+            end
+
         else
             FOV.Color = Aimbot.Configuration.Color
         end
@@ -371,16 +352,6 @@ RunService.RenderStepped:Connect(function()
     end
 end)
 
-RunService.RenderStepped:Connect(function()
-    if Aimbot.Configuration.TriggerBotEnabled then
-        local target = getTargetUnderCursor()
-        if target then
-            VirtualInputManager:SendMouseButtonEvent(0, 0, Enum.UserInputType.MouseButton1, true, game, 0) -- Clique gauche
-            task.wait(0.05) -- Petite pause pour éviter un spam trop rapide
-            VirtualInputManager:SendMouseButtonEvent(0, 0, Enum.UserInputType.MouseButton1, false, game, 0) -- Relâche
-        end
-    end
-end)
 end
 
 return Aimbot
