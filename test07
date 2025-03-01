@@ -347,27 +347,31 @@ end)
 RunService.RenderStepped:Connect(function()
     FOV.Position = Vector2.new(Cam.ViewportSize.X / 2, Cam.ViewportSize.Y / 2)
 
-    if Aimbot.Configuration.aimbotActive then
-        local closest = getTargetPlayer()
-        if closest and closest.Character and closest.Character:FindFirstChild(currentTargetPart, true) then
-            local targetPartInstance = closest.Character:FindFirstChild(currentTargetPart, true)
-            local predictedPosition = predictPosition(targetPartInstance)
+    local closest = getTargetPlayer()
+    if closest and closest.Character and closest.Character:FindFirstChild(currentTargetPart, true) then
+        local targetPartInstance = closest.Character:FindFirstChild(currentTargetPart, true)
+        local predictedPosition = predictPosition(targetPartInstance)
 
-            FOV.Color = Aimbot.Configuration.LockColor
+        FOV.Color = Aimbot.Configuration.LockColor
 
-            if Aimbot.Configuration.AimMode == "Mouse" then
-                moveMouseToTarget(predictedPosition)
-            elseif Aimbot.Configuration.AimMode == "Camera" then
-                alignCameraToTarget(predictedPosition)
-            end
-            
-            if Aimbot.Configuration.TriggerBotEnabled then
-                triggerBot(targetPartInstance) 
-            end
-
-        else
-            FOV.Color = Aimbot.Configuration.Color
+        if Aimbot.Configuration.AimMode == "Mouse" then
+            moveMouseToTarget(predictedPosition)
+        elseif Aimbot.Configuration.AimMode == "Camera" then
+            alignCameraToTarget(predictedPosition)
         end
+        
+        -- Vérifie si la souris est sur un joueur avant de simuler le clic
+        if Aimbot.Configuration.TriggerBotEnabled then
+            local screenPosition, isVisible = Cam:WorldToViewportPoint(targetPartInstance.Position)
+            local mousePosition = Vector2.new(Mouse.X, Mouse.Y)
+            local distanceFromCursor = (Vector2.new(screenPosition.X, screenPosition.Y) - mousePosition).Magnitude
+            
+            -- Si la souris est proche du joueur et dans le FOV, alors simule le clic
+            if distanceFromCursor <= FOV.Radius then
+                triggerBot(targetPartInstance)
+            end
+        end
+
     else
         FOV.Color = Aimbot.Configuration.Color
     end
