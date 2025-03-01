@@ -22,7 +22,7 @@ Aimbot.Configuration = {
     Filled = false,
     Size = 100,
 
-    TriggerBotEnabled = false, -- Change à false pour désactiver
+    TriggerBotEnabled = true, -- Change à false pour désactiver
 
 
     SelectedPart = { "Head" },
@@ -336,11 +336,14 @@ UserInputService.InputBegan:Connect(function(input)
 
     -- Gestion du Triggerbot (en plus de l'Aimbot)
     if input.UserInputType == Enum.UserInputType.MouseButton2 and Aimbot.Configuration.TriggerBotEnabled then
+        -- Recherche de la cible la plus proche
         local closest = getTargetPlayer()
         if closest and closest.Character then
+            -- Vérifie si la cible est réellement à la position de la souris
             local targetPartInstance = closest.Character:FindFirstChild(currentTargetPart)
             if targetPartInstance then
-                triggerBot(targetPartInstance)  -- Exécute le Triggerbot
+                -- Effectue un clic si une cible valide est trouvée
+                triggerBot(targetPartInstance)  -- Exécute le Triggerbot seulement si une cible est trouvée
             end
         end
     end
@@ -352,6 +355,7 @@ UserInputService.InputEnded:Connect(function(input)
         Aimbot.Configuration.aimbotActive = false
     end
 end)
+
 
 -- Lors du RenderStepped (ou autre endroit où tu souhaites activer ton Triggerbot)
 RunService.RenderStepped:Connect(function()
