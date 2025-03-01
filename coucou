@@ -5,6 +5,7 @@ local UserInputService = game:GetService("UserInputService")
 local Players = game:GetService("Players")
 local Cam = workspace.CurrentCamera
 local Mouse = Players.LocalPlayer:GetMouse()
+local VirtualInputManager = game:GetService("VirtualInputManager")
 
 Aimbot.Configuration = {
     TeamCheck = false,
@@ -20,7 +21,9 @@ Aimbot.Configuration = {
     OffColor = Color3.fromRGB(150, 150, 150),
     Filled = false,
     Size = 100,
+
     TriggerBotEnabled = false,
+    TriggerDelay = 0.1,
 
     SelectedPart = { "Head" },
     maxDistance = 2000,
@@ -95,24 +98,6 @@ local function alignCameraToTarget(targetPosition)
     Cam.CFrame = CFrame.new(Cam.CFrame.Position, targetPosition)
 end
 
-local function TriggerBot()
-    while Aimbot.Configuration.TriggerBotEnabled do
-        task.wait(0.01)
-        if Mouse.Target and Mouse.Target.Parent:FindFirstChild("Humanoid") then
-            VirtualInputManager:SendMouseButtonEvent(0, 0, 0, true, game, 0)
-            task.wait(0.05)
-            VirtualInputManager:SendMouseButtonEvent(0, 0, 0, false, game, 0)
-        end
-    end
-end
-
-function Aimbot.ToggleTriggerBot(state)
-    Aimbot.Configuration.TriggerBotEnabled = state
-    if state then
-        task.spawn(TriggerBot)
-    end
-end
-
 local function isInFOV(targetPosition)
     local screenPosition, isVisible = Cam:WorldToViewportPoint(targetPosition)
     local mousePosition = Vector2.new(Mouse.X, Mouse.Y)
@@ -120,6 +105,41 @@ local function isInFOV(targetPosition)
 
     return isVisible and distanceFromCursor <= FOV.Radius
 end
+
+local function isValidTarget(player)
+    if not player or player == Players.LocalPlayer then return false end
+    
+    local humanoid = player.Character and player.Character:FindFirstChildOfClass("Humanoid")
+    if not humanoid or humanoid.Health <= 0 then return false end  -- Vérifie AliveCheck
+    
+    if Aimbot.Configuration.TeamCheck and player.Team == Players.LocalPlayer.Team then
+        return false
+    end
+    
+    if Aimbot.Configuration.WallCheck then
+        local part = findTargetPart(player, currentTargetPart)
+        if part then
+            local ray = workspace:FindPartOnRayWithIgnoreList(
+                Ray.new(Cam.CFrame.Position, (part.Position - Cam.CFrame.Position).Unit * (Cam.CFrame.Position - part.Position).Magnitude),
+                { Players.LocalPlayer.Character, Cam }
+            )
+            if not ray or not ray:IsDescendantOf(player.Character) then
+                return false
+            end
+        end
+    end
+    
+    return true
+end
+
+local function triggerBot(target)
+    if Aimbot.Configuration.TriggerBotEnabled and target and isValidTarget(target) then
+        VirtualInputManager:SendMouseButtonEvent(0, 0, 0, true, game, 0)  -- Clic gauche down
+        task.wait(Aimbot.Configuration.TriggerDelay)
+        VirtualInputManager:SendMouseButtonEvent(0, 0, 0, false, game, 0)  -- Clic gauche up
+    end
+end
+
 local function getClosestPlayer(trg_part)
     local nearest = nil
     local lastDistance = Aimbot.Configuration.maxDistance
@@ -329,13 +349,11 @@ end)
 
 RunService.RenderStepped:Connect(function()
     FOV.Position = Vector2.new(Cam.ViewportSize.X / 2, Cam.ViewportSize.Y / 2)
-
     if Aimbot.Configuration.aimbotActive then
         local closest = getTargetPlayer()
         if closest and closest.Character and closest.Character:FindFirstChild(currentTargetPart, true) then
             local targetPartInstance = closest.Character:FindFirstChild(currentTargetPart, true)
             local predictedPosition = predictPosition(targetPartInstance)
-
             FOV.Color = Aimbot.Configuration.LockColor
 
             if Aimbot.Configuration.AimMode == "Mouse" then
@@ -343,6 +361,9 @@ RunService.RenderStepped:Connect(function()
             elseif Aimbot.Configuration.AimMode == "Camera" then
                 alignCameraToTarget(predictedPosition)
             end
+
+            -- Active le TriggerBot si un ennemi est bien détecté et valide
+            triggerBot(closest)
         else
             FOV.Color = Aimbot.Configuration.Color
         end
@@ -350,6 +371,7 @@ RunService.RenderStepped:Connect(function()
         FOV.Color = Aimbot.Configuration.Color
     end
 end)
+
 end
 
 return Aimbot
