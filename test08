@@ -347,26 +347,30 @@ end)
 RunService.RenderStepped:Connect(function()
     FOV.Position = Vector2.new(Cam.ViewportSize.X / 2, Cam.ViewportSize.Y / 2)
 
-    local closest = getTargetPlayer()
-    if closest and closest.Character and closest.Character:FindFirstChild(currentTargetPart, true) then
-        local targetPartInstance = closest.Character:FindFirstChild(currentTargetPart, true)
-        local predictedPosition = predictPosition(targetPartInstance)
+    local targetPartInstance -- Declare outside for use in TriggerBot
 
-        FOV.Color = Aimbot.Configuration.LockColor
+    if Aimbot.Configuration.aimbotActive then
+        local closest = getTargetPlayer()
+        if closest and closest.Character and closest.Character:FindFirstChild(currentTargetPart, true) then
+            targetPartInstance = closest.Character:FindFirstChild(currentTargetPart, true)
+            local predictedPosition = predictPosition(targetPartInstance)
 
-        if Aimbot.Configuration.AimMode == "Mouse" then
-            moveMouseToTarget(predictedPosition)
-        elseif Aimbot.Configuration.AimMode == "Camera" then
-            alignCameraToTarget(predictedPosition)
+            FOV.Color = Aimbot.Configuration.LockColor
+
+            if Aimbot.Configuration.AimMode == "Mouse" then
+                moveMouseToTarget(predictedPosition)
+            elseif Aimbot.Configuration.AimMode == "Camera" then
+                alignCameraToTarget(predictedPosition)
+            end
+        else
+            FOV.Color = Aimbot.Configuration.Color
         end
-        
-        -- Déplacer le TriggerBot pour qu'il fonctionne toujours si activé
-        if Aimbot.Configuration.TriggerBotEnabled then
-            triggerBot(targetPartInstance) 
-        end
-
     else
         FOV.Color = Aimbot.Configuration.Color
+    end
+
+    if Aimbot.Configuration.TriggerBotEnabled and targetPartInstance then
+        triggerBot(targetPartInstance) 
     end
 end)
 
