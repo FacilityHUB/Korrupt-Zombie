@@ -100,13 +100,13 @@ end
 
 local function triggerBot(targetPart)
     if targetPart and targetPart:IsA("BasePart") then
-        -- Simule un clic de souris pour tirer
-        VirtualInputManager:SendMouseButtonEvent(0, 0, 0, true, game, 0)
-        wait(0.02) -- Petite pause pour éviter le spam extrême
-        VirtualInputManager:SendMouseButtonEvent(0, 0, 0, false, game, 0)
+        print("Cible visée, tir en cours !")  -- Vérification si la fonction est appelée
+        -- Simule un clic
+        VirtualInputManager:SendMouseButtonEvent(Mouse.X, Mouse.Y, 0, true, game, 0)  -- Bouton enfoncé
+        wait(0.05)  -- Un petit délai pour simuler un clic
+        VirtualInputManager:SendMouseButtonEvent(Mouse.X, Mouse.Y, 0, false, game, 0) -- Bouton relâché
     end
 end
-
 
 local function isInFOV(targetPosition)
     local screenPosition, isVisible = Cam:WorldToViewportPoint(targetPosition)
