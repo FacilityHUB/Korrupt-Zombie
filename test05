@@ -22,7 +22,7 @@ Aimbot.Configuration = {
     Filled = false,
     Size = 100,
 
-    TriggerBotEnabled = true, -- Change à false pour désactiver
+    TriggerBotEnabled = false, -- Change à false pour désactiver
 
 
     SelectedPart = { "Head" },
