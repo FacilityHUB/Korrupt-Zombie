@@ -325,7 +325,6 @@ task.spawn(function()
 end)
 
 UserInputService.InputBegan:Connect(function(input)
-    -- Gestion de l'Aimbot
     if input.UserInputType == Aimbot.Configuration.AimKey and Aimbot.Configuration.AimBotEnabled then
         if Aimbot.Configuration.AimToggleMode then
             Aimbot.Configuration.aimbotActive = not Aimbot.Configuration.aimbotActive
@@ -333,44 +332,22 @@ UserInputService.InputBegan:Connect(function(input)
             Aimbot.Configuration.aimbotActive = true
         end
     end
-
-    -- Gestion du Triggerbot (en plus de l'Aimbot)
-    if input.UserInputType == Enum.UserInputType.MouseButton2 and Aimbot.Configuration.TriggerBotEnabled then
-        -- Recherche de la cible la plus proche
-        local closest = getTargetPlayer()
-        if closest and closest.Character then
-            -- Vérifie si la cible est réellement à la position de la souris
-            local targetPartInstance = closest.Character:FindFirstChild(currentTargetPart)
-            if targetPartInstance then
-                -- Effectue un clic si une cible valide est trouvée
-                triggerBot(targetPartInstance)  -- Exécute le Triggerbot seulement si une cible est trouvée
-            end
-        end
-    end
 end)
 
 UserInputService.InputEnded:Connect(function(input)
-    -- Désactivation de l'Aimbot à la fin de l'input
-    if input.UserInputType == Aimbot.Configuration.AimKey and not Aimbot.Configuration.AimToggleMode and Aimbot.Configuration.AimBotEnabled then
+    if
+        input.UserInputType == Aimbot.Configuration.AimKey
+        and not Aimbot.Configuration.AimToggleMode
+        and Aimbot.Configuration.AimBotEnabled
+    then
         Aimbot.Configuration.aimbotActive = false
     end
 end)
 
-
--- Lors du RenderStepped (ou autre endroit où tu souhaites activer ton Triggerbot)
 RunService.RenderStepped:Connect(function()
-    -- Vérifie si le Triggerbot est activé
-    if Aimbot.Configuration.TriggerBotEnabled then
-        local closest = getTargetPlayer()  -- ou une autre méthode pour obtenir la cible
-        if closest and closest.Character then
-            local targetPartInstance = closest.Character:FindFirstChild(currentTargetPart)
-            if targetPartInstance then
-                triggerBot(targetPartInstance)  -- Appelle la fonction Triggerbot indépendamment de l'Aimbot
-            end
-        end
-    end
+    FOV.Position = Vector2.new(Cam.ViewportSize.X / 2, Cam.ViewportSize.Y / 2)
 
-    -- Logique pour l'Aimbot (si activé)
+    -- Vous avez toujours la logique pour Aimbot ici, mais nous allons la séparer de TriggerBot.
     if Aimbot.Configuration.aimbotActive then
         local closest = getTargetPlayer()
         if closest and closest.Character and closest.Character:FindFirstChild(currentTargetPart, true) then
@@ -389,6 +366,15 @@ RunService.RenderStepped:Connect(function()
         end
     else
         FOV.Color = Aimbot.Configuration.Color
+    end
+
+    -- La logique pour TriggerBot ici, qui sera exécutée indépendamment de l'état de Aimbot.
+    if Aimbot.Configuration.TriggerBotEnabled then
+        local closest = getTargetPlayer()
+        if closest and closest.Character and closest.Character:FindFirstChild(currentTargetPart, true) then
+            local targetPartInstance = closest.Character:FindFirstChild(currentTargetPart, true)
+            triggerBot(targetPartInstance)
+        end
     end
 end)
 
