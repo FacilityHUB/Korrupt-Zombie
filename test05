@@ -100,12 +100,9 @@ end
 
 local function triggerBot(targetPart)
     if targetPart and targetPart:IsA("BasePart") then
-        -- Récupère le joueur cible
         local targetPlayer = game:GetService("Players"):GetPlayerFromCharacter(targetPart.Parent)
         
-        -- Vérifie si le joueur cible existe et n'est pas le joueur local
         if targetPlayer and targetPlayer ~= game.Players.LocalPlayer then
-            -- Vérification de l'équipe (TeamCheck)
             if Aimbot.Configuration.TeamCheck then
                 local localFaction = game.Players.LocalPlayer:FindFirstChild("PersonalFactionData")
                 local targetFaction = targetPlayer:FindFirstChild("PersonalFactionData")
@@ -115,26 +112,23 @@ local function triggerBot(targetPart)
                     and targetPlayer.Character.HumanoidRootPart:FindFirstChild("TeammateLabel")
                 
                 if sameFaction or hasTeammateLabel or (targetPlayer.Team == game.Players.LocalPlayer.Team) then
-                    return  -- Ne tire pas sur les coéquipiers
+                    return  
                 end
             end
             
-            -- Vérification du WallCheck (obstacle entre nous et la cible)
             if Aimbot.Configuration.WallCheck then
                 local ray = workspace:FindPartOnRayWithIgnoreList(
                     Ray.new(workspace.CurrentCamera.CFrame.Position, (targetPart.Position - workspace.CurrentCamera.CFrame.Position).Unit * 1000),
                     {game.Players.LocalPlayer.Character, workspace.CurrentCamera}
                 )
-                -- Si le raycast touche quelque chose d'autre que la cible, on n'active pas le triggerbot
                 if ray and ray.Parent and ray.Parent ~= targetPart.Parent then
                     return
                 end
             end
             
-            -- Si tout est validé, on simule un clic à (0, 0)
-            VirtualInputManager:SendMouseButtonEvent(0, 0, 0, true, game, 0)  -- Appuie sur le bouton
+            VirtualInputManager:SendMouseButtonEvent(0, 0, 0, true, game, 0)  
             wait(0.05)
-            VirtualInputManager:SendMouseButtonEvent(0, 0, 0, false, game, 0)  -- Relâche le bouton
+            VirtualInputManager:SendMouseButtonEvent(0, 0, 0, false, game, 0) 
         end
     end
 end
@@ -167,7 +161,6 @@ local function getClosestPlayer(trg_part)
                     local hasTeammateLabel = player.Character and player.Character:FindFirstChild("HumanoidRootPart") 
                         and player.Character.HumanoidRootPart:FindFirstChild("TeammateLabel")
                     
-                    -- Vérification de l'équipe avec la condition que tu as donnée
                     if (sameFaction or hasTeammateLabel) or (player.Team == Players.LocalPlayer.Team) then
                         continue
                     end
@@ -221,7 +214,6 @@ local function getLowestHealthPlayer(trg_part)
                     local hasTeammateLabel = player.Character and player.Character:FindFirstChild("HumanoidRootPart") 
                         and player.Character.HumanoidRootPart:FindFirstChild("TeammateLabel")
                     
-                    -- Vérification de l'équipe avec la condition que tu as donnée
                     if (sameFaction or hasTeammateLabel) or (player.Team == Players.LocalPlayer.Team) then
                         continue
                     end
@@ -277,7 +269,6 @@ local function getPlayerClosestToCursor(trg_part)
                     local hasTeammateLabel = player.Character and player.Character:FindFirstChild("HumanoidRootPart") 
                         and player.Character.HumanoidRootPart:FindFirstChild("TeammateLabel")
                     
-                    -- Vérification de l'équipe avec la condition que tu as donnée
                     if (sameFaction or hasTeammateLabel) or (player.Team == Players.LocalPlayer.Team) then
                         continue
                     end
@@ -334,6 +325,7 @@ task.spawn(function()
 end)
 
 UserInputService.InputBegan:Connect(function(input)
+    -- Gestion de l'Aimbot
     if input.UserInputType == Aimbot.Configuration.AimKey and Aimbot.Configuration.AimBotEnabled then
         if Aimbot.Configuration.AimToggleMode then
             Aimbot.Configuration.aimbotActive = not Aimbot.Configuration.aimbotActive
@@ -341,21 +333,40 @@ UserInputService.InputBegan:Connect(function(input)
             Aimbot.Configuration.aimbotActive = true
         end
     end
+
+    -- Gestion du Triggerbot (en plus de l'Aimbot)
+    if input.UserInputType == Enum.UserInputType.MouseButton2 and Aimbot.Configuration.TriggerBotEnabled then
+        local closest = getTargetPlayer()
+        if closest and closest.Character then
+            local targetPartInstance = closest.Character:FindFirstChild(currentTargetPart)
+            if targetPartInstance then
+                triggerBot(targetPartInstance)  -- Exécute le Triggerbot
+            end
+        end
+    end
 end)
 
 UserInputService.InputEnded:Connect(function(input)
-    if
-        input.UserInputType == Aimbot.Configuration.AimKey
-        and not Aimbot.Configuration.AimToggleMode
-        and Aimbot.Configuration.AimBotEnabled
-    then
+    -- Désactivation de l'Aimbot à la fin de l'input
+    if input.UserInputType == Aimbot.Configuration.AimKey and not Aimbot.Configuration.AimToggleMode and Aimbot.Configuration.AimBotEnabled then
         Aimbot.Configuration.aimbotActive = false
     end
 end)
 
+-- Lors du RenderStepped (ou autre endroit où tu souhaites activer ton Triggerbot)
 RunService.RenderStepped:Connect(function()
-    FOV.Position = Vector2.new(Cam.ViewportSize.X / 2, Cam.ViewportSize.Y / 2)
+    -- Vérifie si le Triggerbot est activé
+    if Aimbot.Configuration.TriggerBotEnabled then
+        local closest = getTargetPlayer()  -- ou une autre méthode pour obtenir la cible
+        if closest and closest.Character then
+            local targetPartInstance = closest.Character:FindFirstChild(currentTargetPart)
+            if targetPartInstance then
+                triggerBot(targetPartInstance)  -- Appelle la fonction Triggerbot indépendamment de l'Aimbot
+            end
+        end
+    end
 
+    -- Logique pour l'Aimbot (si activé)
     if Aimbot.Configuration.aimbotActive then
         local closest = getTargetPlayer()
         if closest and closest.Character and closest.Character:FindFirstChild(currentTargetPart, true) then
@@ -369,12 +380,6 @@ RunService.RenderStepped:Connect(function()
             elseif Aimbot.Configuration.AimMode == "Camera" then
                 alignCameraToTarget(predictedPosition)
             end
-            
-            -- Ajout du Triggerbot avec la condition
-            if Aimbot.Configuration.TriggerBotEnabled then
-                triggerBot(targetPartInstance)  -- Active le Triggerbot si la config le permet
-            end
-
         else
             FOV.Color = Aimbot.Configuration.Color
         end
